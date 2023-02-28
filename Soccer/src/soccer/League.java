@@ -1,56 +1,80 @@
 package soccer;
 
+import utility.PlayerDatabase;
+
+import java.time.LocalDateTime;
+import java.time.Period;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.StringTokenizer;
+
 public class League {
 
-        public static void main(String[] args) {
+   public static void main(String[] args) {
 
-        Team[] theTeams = createTeams();
-        Game[] theGames = createGames(theTeams);
+	  Team[] theTeams = createTeams("The Reds, The Greens, The Blue", 3);
+	  Game[] theGames = createGames(theTeams);
 
-        Game currGame = theGames[0];
+	  System.out.println(League.getLeagueAnnouncement(theGames));
 
-        currGame.playGame(3);
+	  for (Game currGame : theGames) {
+		 currGame.playGame();
+		 System.out.println(currGame.getDescription());
+	  }
+
+	  showBestTeam(theTeams);
+
+   }
+
+   public static void showBestTeam(Team[] theTeams) {
+
+	  Team currBestTeam = theTeams[0];
+
+	  System.out.println("\nTeam Points");
+	  for (Team currTeam : theTeams) {
+		 System.out.println(currTeam.getTeamName() + ": " + currTeam.getPointsTotal() + ":" + currTeam.getGoalsTotal());
+		 if (currTeam.getGoalsTotal() > currBestTeam.getPointsTotal()) {
+			currBestTeam = currTeam;
+		 } else if (currTeam.getPointsTotal() == currBestTeam.getPointsTotal()) {
+			if (currTeam.getGoalsTotal() > currBestTeam.getGoalsTotal()) {
+			   currBestTeam = currTeam;
+			}
+		 }
+	  }
+
+	  System.out.println("\nWinner of the league is " + currBestTeam.getTeamName());
+   }
 
 
-        System.out.println(currGame.getDescription());
+   public static Team[] createTeams(String teamNames, int teamSize) {
+	  PlayerDatabase playerDB = new PlayerDatabase();
+	  StringTokenizer teamNameTokens = new StringTokenizer(teamNames, ",");
+	  Team[] theTeams = new Team[teamNameTokens.countTokens()];
 
-        }
+	  for (int i = 0; i < theTeams.length; i++) {
+		 theTeams[i] = new Team(teamNameTokens.nextToken(), playerDB.getTeam(teamSize));
+	  }
 
-        public static Team[] createTeams() {
+	  return theTeams;
+   }
 
-        Player player1 = new Player();
-        player1.playerName = "George Eliot";
-        Player player2 = new Player();
-        player2.playerName = "Graham Greene";
-        Player player3 = new Player();
-        player3.playerName = "Geoffrey Chaucer";
-        Player[] thePlayers = {player1, player2, player3};
+   public static Game[] createGames(Team[] theTeams) {
+	  ArrayList<Game> theGames = new ArrayList<>();
+	  int daysBetweenGames = 0;
+	  for (Team homeTeam : theTeams) {
+		 for (Team awayTeam : theTeams) {
+			if (homeTeam != awayTeam) {
+			   daysBetweenGames += 7;
+			   theGames.add(new Game(homeTeam, awayTeam, LocalDateTime.now().plusDays(daysBetweenGames)));
+			}
+		 }
+	  }
+	  return theGames.toArray(new Game[1]);
+   }
 
-        Team team1 = new Team();
-        team1.teamName = "The Greens";
-        team1.playerArray = thePlayers;
-
-        // Create team2
-        Team team2 = new Team();
-        team2.teamName = "The Reds";
-        team2.playerArray = new Player[3];
-        team2.playerArray[0] = new Player();
-        team2.playerArray[0].playerName = "Robert Service";
-        team2.playerArray[1] = new Player();
-        team2.playerArray[1].playerName = "Robbie Burns";
-        team2.playerArray[2] = new Player();
-        team2.playerArray[2].playerName = "Rafael Sabatini";
-
-        Team[] theTeams = {team1, team2};
-        return theTeams;
-        }
-
-        public static Game[] createGames(Team[] theTeams) {
-        Game theGame = new Game();
-        theGame.homeTeam = theTeams[0];
-        theGame.awayTeam = theTeams[1];
-        Game[] theGames = {theGame};
-        return theGames;
-        }
-
-        }
+   public static String getLeagueAnnouncement(Game[] theGames) {
+	  Period thePeriod = Period.between(theGames[0].getTheDateTime().toLocalDate(), theGames[theGames.length - 1].getTheDateTime().toLocalDate());
+	  return "The League is scheduled to run for " + thePeriod.getMonths() +
+			  " month(s), and " + thePeriod.getDays() + " day(s).\n";
+   }
+}
